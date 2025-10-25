@@ -18,6 +18,16 @@
         width: 100%;
         height: 100%;
       }
+
+      #info {
+        position: absolute;
+        margin: 0;
+        top: 1vh;
+        left: 1vh;
+        color: white;
+        font-size: 1.5rem;
+        font-family: Arial, sans-serif;
+      }
     </style>
   </head>
   <script type="text/javascript" src="https://cs460.org/js/glmatrix.js"></script>
@@ -59,7 +69,7 @@
     var vertices, indices, v_buffer, i_buffer;
     var keysPressed = {};
     
-    // Used to track what keys are pressed for user control of main fish.
+    // Used to track what keys are pressed - used to control big fish.
     document.addEventListener('keydown', (event) => {
       keysPressed[event.key] = true;
     });
@@ -117,10 +127,11 @@
       // create multiple fish
       all_fish = [];
 
+      // Load fish with red color - this gets overwritten later.
       all_fish.push( createFish( [0, 0, 0], [1,0,0,0.7], 1, -1) );
 
       for (var i = 0; i < 100; i++) {
-        random_color = [Math.random(),Math.random(),Math.random(),Math.random()];
+        random_color = [Math.random(),Math.random(),Math.random(),Math.random()]; // Initially loaded with random colors, this gets overwritten later.
         random_offset = [Math.random()-Math.random(), Math.random()-Math.random(), 0.0];
         random_scale = Math.random()*0.3;
         all_fish.push( createFish( random_offset, random_color, random_scale, 1) );
@@ -134,19 +145,23 @@
       return (value - min) / (max - min);
     }
 
-    // Scale used to bring colors between [0, 0.9] so flashing effect can be added with the performance.now() line.
+    // Scale used to bring colors between [0, 0.9] so flashing effect of adding/subtracting 0.1 can be added with the performance.now() line.
     var outputScale = 0.9;
 
     // Color functions used to make rainbow fish.
     // I used this color picker website to determine when red, green, and blue should change: https://rgbcolorpicker.com/
     // I adjusted the hue slider left to right to see when RGB values were 0, 1, increasing, or decreasing.
     function getRedValue(x) {
-      x = normalize(x, -1, 1);
+      x = normalize(x, -1, 1);  // Normalize the x offset between 0 and 1.
       var output = 0;
 
+      // On the hue slider mentioned above, between 0% - 16% of the slider and 83.33% - 100% on hue red should be 1.
+      // This same logic was then applied to both blue and green to get their values.
       if (x < 0.1666 || x >= 0.8333) {
         output = 1;
       } else if (x < 0.3333) {
+        // If this slider should be decreasing or increasing between a range on the hue slider I normalize it again.
+        // This way a smooth transition is made on this specific range.
         output = 1 - normalize(x, 0.1666, 0.3333);
       } else if (x >= 0.6666 && x < 0.8333) {
         output = normalize(x, 0.6666, 0.8333);
@@ -260,7 +275,7 @@
         var current_scale = current_buffers[5];
         var current_direction = current_buffers[6];
 
-        // Ignore first
+        // Ignore first because the first will be controlled by the user.
         if (r != 0) {
           // Moves fish forward
           current_offset[0] += 0.01;
@@ -298,7 +313,7 @@
           }
         }
 
-        // Loops fish around the top and bottom of the screen.
+        // Loops all fish around the top and bottom of the screen.
         if (current_offset[1] > 1) {
           current_offset[1] = -1;
         } else if (current_offset[1] < -1) {
@@ -346,8 +361,8 @@
           a
         ]);
 
-        if (r === 0) {
-          // Remove transparency on big fish to showcase rainbow color transition.
+        // Remove transparency on big fish to showcase rainbow color transition.
+        if (r == 0) {
           current_color = new Float32Array([
           getRedValue(current_offset[0]) + 0.1*Math.sin(t + 0.0),
           getGreenValue(current_offset[0]) + 0.1*Math.sin(t + 0.0),
@@ -393,6 +408,7 @@
 
   </script>
   <body>
+    <p id="info">Use WASD to move the big fish!</p>
     <canvas id="c"></canvas>
   </body>
 </html>
