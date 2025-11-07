@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assignment 5</title>
+    <style>
+      html,
+      body {
+        background-color: black;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+    ></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@latest/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      let renderer, controls, scene, camera, loader;
+
+      window.onload = async () => {
+        // Create scene
+        scene = new THREE.Scene();
+
+        // Setup Camera
+        let fov = 75;
+        let ratio = window.innerWidth / window.innerHeight;
+        let zNear = 0.1;
+        let zFar = 10000;
+
+        camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
+        camera.position.set(0, 0, 10);
+
+        // Create renderer and add canvas to DOM.
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Light setup
+        let ambientLight = new THREE.AmbientLight();
+        scene.add(ambientLight);
+
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 5.0);
+        directionalLight.position.set(10, 100, 10);
+        scene.add(directionalLight);
+
+        loader = new GLTFLoader();
+
+        // Load unedited 3D scan from polycam.
+        await loadGLTFFile("UneditedAppa.glb", 40, 5, -3.5, 0);
+
+        // Load edited 3D scan.
+        await loadGLTFFile("Appa.glb", 40, -5, 0, 0);
+
+        // Enable camera controls.
+        controls = new OrbitControls(camera, renderer.domElement);
+
+        animate();
+      };
+
+      // Custom wrapper function to simplify loading a gltf file.
+      // Function is async and returns promise to ensure that animation loop doesn't begin until models are loaded.
+      let loadGLTFFile = async (filename, scale = 1, x = 0, y = 0, z = 0) => {
+        return new Promise((resolve) => {
+          // Call load on gltf loader object.
+          loader.load(filename, (gltf) => {
+            var poly = gltf.scenes[0].children[0];
+
+            // Set scale
+            poly.scale.x = scale;
+            poly.scale.y = scale;
+            poly.scale.z = scale;
+
+            // Remove rotation
+            poly.quaternion.w = 1;
+            poly.quaternion.x = 0;
+            poly.quaternion.y = 0;
+            poly.quaternion.z = 0;
+
+            // Apply translation
+            poly.translateX(x);
+            poly.translateY(y);
+            poly.translateZ(z);
+
+            scene.add(gltf.scene);
+            resolve();
+          });
+        });
+      };
+
+      let animate = () => {
+        requestAnimationFrame(animate);
+
+        controls.update();
+        renderer.render(scene, camera);
+      };
+    </script>
+  </head>
+  <body></body>
+</html>
