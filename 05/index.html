@@ -33,8 +33,10 @@
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { Pane } from "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js";
 
-      let renderer, controls, scene, camera, loader;
+      // Declare variables used for various items in scene.
+      let renderer, controls, scene, camera, loader, pane;
 
       window.onload = async () => {
         // Create scene
@@ -47,7 +49,7 @@
         let zFar = 10000;
 
         camera = new THREE.PerspectiveCamera(fov, ratio, zNear, zFar);
-        camera.position.set(0, 0, 10);
+        camera.position.set(0, 3, 10);
 
         // Create renderer and add canvas to DOM.
         renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -72,6 +74,10 @@
 
         // Enable camera controls.
         controls = new OrbitControls(camera, renderer.domElement);
+        
+        // Enable tweakpane
+        pane = new Pane();
+        let sceneui = pane.addFolder({title: "Scene"});
 
         animate();
       };
@@ -89,16 +95,16 @@
             poly.scale.y = scale;
             poly.scale.z = scale;
 
+            // Apply translation
+            poly.translateX(x);
+            poly.translateY(y);
+            poly.translateZ(z);
+
             // Remove rotation
             poly.quaternion.w = 1;
             poly.quaternion.x = 0;
             poly.quaternion.y = 0;
             poly.quaternion.z = 0;
-
-            // Apply translation
-            poly.translateX(x);
-            poly.translateY(y);
-            poly.translateZ(z);
 
             scene.add(gltf.scene);
             resolve();
