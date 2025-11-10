@@ -13,6 +13,18 @@
         height: 100%;
         overflow: hidden;
       }
+
+      #loader {
+        margin: 0;
+        padding: 0;
+        position: fixed;
+        color: white;
+        top: 50vh;
+        left: 50vw;
+        transform: translate(-50%, -50%); /* top and left target top left of text element, this adjusts for that offset so text is in center. */
+        font-family: sans-serif;
+        font-size: 2rem;
+      }
     </style>
 
     <script
@@ -33,12 +45,20 @@
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { AnaglyphEffect } from "three/addons/effects/AnaglyphEffect.js";
       import { Pane } from "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js";
 
       // Declare variables used for various items in scene.
-      let renderer, controls, scene, camera, loader, pane;
+      let renderer, controls, scene, camera, loader, pane, anaglyph;
 
+      // ---- SETTINGS and HELPER for TWEAKPANE
+      window["SCENE"] = {
+        "anaglyph": false
+      }
+
+      // Defined as an async function as the calls to GLTFLoader are asynchronous - I only want to display items once everything is loaded.
       window.onload = async () => {
+        // ---- SCENE SETUP
         // Create scene
         scene = new THREE.Scene();
 
@@ -53,7 +73,7 @@
 
         // Create renderer and add canvas to DOM.
         renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(innerWidth, window.innerHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Light setup
@@ -64,6 +84,11 @@
         directionalLight.position.set(10, 100, 10);
         scene.add(directionalLight);
 
+        // Create anaglyph effect
+        anaglyph = new AnaglyphEffect(renderer);
+        anaglyph.setSize(window.innerWidth, window.innerHeight);
+
+        // ---- LOAD MODELS
         loader = new GLTFLoader();
 
         // Load unedited 3D scan from polycam.
@@ -72,12 +97,26 @@
         // Load edited 3D scan.
         await loadGLTFFile("Appa.glb", 40, -5, 0, 0);
 
-        // Enable camera controls.
-        controls = new OrbitControls(camera, renderer.domElement);
-        
+        // ---- TWEAKPANE CONFIG
         // Enable tweakpane
         pane = new Pane();
         let sceneui = pane.addFolder({title: "Scene"});
+
+        // Camera position controls
+        sceneui.addBinding(directionalLight.position, "x", {min: -100, max: 100, label: "Light X"});
+        sceneui.addBinding(directionalLight.position, "y", {min: -100, max: 100, label: "Light Y"});
+        sceneui.addBinding(directionalLight.position, "z", {min: -100, max: 100, label: "Light Z"});
+
+        sceneui.addBinding(window.SCENE, "anaglyph");
+
+        
+        // ---- ENABLE SCENE
+        // Enable camera controls.
+        controls = new OrbitControls(camera, renderer.domElement);
+        
+        // Hide loader after models are finished loading.
+        let loaderElement = document.getElementById("loader");
+        loaderElement.style.display = "none";
 
         animate();
       };
@@ -116,9 +155,13 @@
         requestAnimationFrame(animate);
 
         controls.update();
-        renderer.render(scene, camera);
+        if (window["SCENE"].anaglyph) {
+          anaglyph.render(scene, camera);
+        } else {
+          renderer.render(scene, camera);
+        }
       };
     </script>
   </head>
-  <body></body>
+  <body><p id="loader">Loading...</p></body>
 </html>
