@@ -126,7 +126,8 @@
         let loaderElement = document.getElementById("loader");
         loaderElement.style.display = "none";
 
-        animate();
+        //animate();
+        renderer.setAnimationLoop(animate);
       };
 
       // Custom wrapper function to simplify loading a gltf file.
@@ -163,8 +164,6 @@
       };
 
       let animate = () => {
-        requestAnimationFrame(animate);
-
         controls.update();
         if (window.SCENE.anaglyph) {
           anaglyph.render(scene, camera);
