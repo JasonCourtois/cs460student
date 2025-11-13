@@ -52,8 +52,10 @@
       let renderer, controls, scene, camera, loader, pane, anaglyph;
 
       // ---- SETTINGS and HELPER for TWEAKPANE
-      window["SCENE"] = {
-        "anaglyph": false
+      window.SCENE = {
+        "anaglyph": false,
+        "poly": null,
+        "appa": null
       }
 
       // Defined as an async function as the calls to GLTFLoader are asynchronous - I only want to display items once everything is loaded.
@@ -92,10 +94,10 @@
         loader = new GLTFLoader();
 
         // Load unedited 3D scan from polycam.
-        await loadGLTFFile("UneditedAppa.glb", 40, 5, -3.5, 0);
+        await loadGLTFFile("UneditedAppa.glb", 40, 5, -3.5, 0, "poly");
 
         // Load edited 3D scan.
-        await loadGLTFFile("Appa.glb", 40, -5, 0, 0);
+        await loadGLTFFile("Appa.glb", 40, -5, 0, 0, "appa");
 
         // ---- TWEAKPANE CONFIG
         // Enable tweakpane
@@ -123,27 +125,30 @@
 
       // Custom wrapper function to simplify loading a gltf file.
       // Function is async and returns promise to ensure that animation loop doesn't begin until models are loaded.
-      let loadGLTFFile = async (filename, scale = 1, x = 0, y = 0, z = 0) => {
+      let loadGLTFFile = async (filename, scale = 1, x = 0, y = 0, z = 0, tweakReference) => {
         return new Promise((resolve) => {
           // Call load on gltf loader object.
           loader.load(filename, (gltf) => {
-            var poly = gltf.scenes[0].children[0];
+            var model = gltf.scenes[0].children[0];
 
             // Set scale
-            poly.scale.x = scale;
-            poly.scale.y = scale;
-            poly.scale.z = scale;
+            model.scale.x = scale;
+            model.scale.y = scale;
+            model.scale.z = scale;
 
             // Apply translation
-            poly.translateX(x);
-            poly.translateY(y);
-            poly.translateZ(z);
+            model.translateX(x);
+            model.translateY(y);
+            model.translateZ(z);
 
-            // Remove rotation
-            poly.quaternion.w = 1;
-            poly.quaternion.x = 0;
-            poly.quaternion.y = 0;
-            poly.quaternion.z = 0;
+            // Remove rotation - Objects still appears rotated as that is how the model of the scan output.
+            model.quaternion.w = 1;
+            model.quaternion.x = 0;
+            model.quaternion.y = 0;
+            model.quaternion.z = 0;
+
+            // Update reference to model in tweakpane settings
+            window.SCENE[tweakReference] = model;
 
             scene.add(gltf.scene);
             resolve();
@@ -155,7 +160,7 @@
         requestAnimationFrame(animate);
 
         controls.update();
-        if (window["SCENE"].anaglyph) {
+        if (window.SCENE.anaglyph) {
           anaglyph.render(scene, camera);
         } else {
           renderer.render(scene, camera);
