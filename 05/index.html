@@ -46,7 +46,6 @@
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { AnaglyphEffect } from "three/addons/effects/AnaglyphEffect.js";
-      import { VRButton } from "three/addons/webxr/VRButton.js"
       import { Pane } from "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js";
 
       // Declare variables used for various items in scene.
@@ -77,12 +76,7 @@
         // Create renderer and add canvas to DOM.
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        // Insert code to support webxr support
-        renderer.xr.enabled = true;
-        renderer.xr.setReferenceSpaceType('local-floor');
-        document.body.appendChild(renderer.domElement); // Adds canvas to DOM
-
-        document.body.appendChild(VRButton.createButton(renderer));
+        document.body.appendChild(renderer.domElement);
 
         // Light setup
         let ambientLight = new THREE.AmbientLight();
@@ -126,8 +120,7 @@
         let loaderElement = document.getElementById("loader");
         loaderElement.style.display = "none";
 
-        //animate();
-        renderer.setAnimationLoop(animate);
+        animate();
       };
 
       // Custom wrapper function to simplify loading a gltf file.
@@ -163,7 +156,9 @@
         });
       };
 
-      let animate = (time) => {
+      let animate = () => {
+        requestAnimationFrame(animate);
+
         controls.update();
         if (window.SCENE.anaglyph) {
           anaglyph.render(scene, camera);
