@@ -46,6 +46,7 @@
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { AnaglyphEffect } from "three/addons/effects/AnaglyphEffect.js";
+      import { VRButton } from "three/addons/webxr/VRButton.js"
       import { Pane } from "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js";
 
       // Declare variables used for various items in scene.
@@ -76,7 +77,12 @@
         // Create renderer and add canvas to DOM.
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        // Insert code to support webxr support
+        renderer.xr.enabled = true;
+        renderer.xr.setReferenceSpaceType('local-floor');
+        document.body.appendChild(renderer.domElement); // Adds canvas to DOM
+
+        document.body.appendChild(VRButton.createButton(renderer));
 
         // Light setup
         let ambientLight = new THREE.AmbientLight();
