@@ -40,27 +40,50 @@
         }
       }
     </script>
+    <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
 
     <script type="module">
       import * as THREE from "three";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { AnaglyphEffect } from "three/addons/effects/AnaglyphEffect.js";
+      import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js';
       import { Pane } from "https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js";
 
       // Declare variables used for various items in scene.
-      let renderer, controls, scene, camera, loader, pane, anaglyph;
+      let renderer, controls, scene, camera, loader, pane, anaglyph, stats;
 
       // ---- SETTINGS and HELPER for TWEAKPANE
       window.SCENE = {
         "anaglyph": false,
+        // Poly mesh related settings
         "poly": null,
-        "appa": null
+        "blender": null,
+        "rotate_poly": false,
+        "do_rotate_poly": () => {
+          window.SCENE.rotate_poly = !window.SCENE.rotate_poly;
+        },
+        // Blender mesh related settings
+        "rotate_blender": false,
+        "do_rotate_blender": () => {
+          window.SCENE.rotate_blender = !window.SCENE.rotate_blender;
+        },
+        "normals_helper": null,
+        'blender_old_material': null,
+        'change_material': function() {
+          if (!window['SCENE']['blender_old_material']) {
+            window['SCENE']['blender_old_material'] = window['SCENE']['blender'].material.clone();
+            window['SCENE']['blender'].material = new THREE.MeshNormalMaterial();
+          } else {
+            window['SCENE']['blender'].material = window['SCENE']['blender_old_material'].clone();
+            window['SCENE']['blender_old_material'] = null;
+          }
+        }
       }
 
       // Defined as an async function as the calls to GLTFLoader are asynchronous - I only want to display items once everything is loaded.
       window.onload = async () => {
-        // ---- SCENE SETUP
+        // ---- SCENE SETUP ----
         // Create scene
         scene = new THREE.Scene();
 
@@ -90,34 +113,55 @@
         anaglyph = new AnaglyphEffect(renderer);
         anaglyph.setSize(window.innerWidth, window.innerHeight);
 
-        // ---- LOAD MODELS
+        // ---- LOAD MODELS ----
         loader = new GLTFLoader();
 
         // Load unedited 3D scan from polycam.
         await loadGLTFFile("UneditedAppa.glb", 40, 5, -3.5, 0, "poly");
 
         // Load edited 3D scan.
-        await loadGLTFFile("Appa.glb", 40, -5, 0, 0, "appa");
-
-        // ---- TWEAKPANE CONFIG
+        await loadGLTFFile("Appa.glb", 40, -5, 0, 0, "blender");
+      
+        // ---- TWEAKPANE CONFIG ----
         // Enable tweakpane
         pane = new Pane();
         let sceneui = pane.addFolder({title: "Scene"});
 
-        // Camera position controls
+        // Camera/renderer controls
         sceneui.addBinding(directionalLight.position, "x", {min: -100, max: 100, label: "Light X"});
         sceneui.addBinding(directionalLight.position, "y", {min: -100, max: 100, label: "Light Y"});
         sceneui.addBinding(directionalLight.position, "z", {min: -100, max: 100, label: "Light Z"});
 
         sceneui.addBinding(window.SCENE, "anaglyph");
-
         
-        // ---- ENABLE SCENE
+        // Poly mesh controls
+        let polyui = pane.addFolder({title: "PolyCam Mesh"});
+        polyui.addBinding(window.SCENE.poly.material, "wireframe");
+        polyui.addButton({title: "rotate!"}).on("click", () => {
+          window.SCENE.do_rotate_poly();
+        })
+
+        // Edited appa mesh controls
+        let blenderui = pane.addFolder({title: "Blender Mesh"});
+        blenderui.addBinding(window.SCENE.normals_helper, "visible", {label: "Show Normals!"});
+        blenderui.addButton({title: "rotate!"}).on("click", () => {
+          window.SCENE.do_rotate_blender();
+        })
+        blenderui.addButton({title: "Change Material"}).on("click", () => {
+          window.SCENE.change_material();
+        })
+        
+        // ---- ENABLE SCENE ----
         // Enable camera controls.
         controls = new OrbitControls(camera, renderer.domElement);
         
         // Hide loader after models are finished loading.
         let loaderElement = document.getElementById("loader");
+
+        // stats.js widget
+        stats = new Stats();
+        document.body.appendChild( stats.domElement );
+
         loaderElement.style.display = "none";
 
         animate();
@@ -150,14 +194,55 @@
             // Update reference to model in tweakpane settings
             window.SCENE[tweakReference] = model;
 
+            // Only add normals helper to edited blender mesh.
+            if (tweakReference == "blender") {
+              let normalsHelper = new VertexNormalsHelper(model, 0.1, 'blue')
+              normalsHelper.visible = false;
+              // Add reference to normals_helper to SCENE
+              window.SCENE.normals_helper = normalsHelper;
+              // Add normals helper to scene to make it visible.
+              scene.add(normalsHelper);
+            }
+
             scene.add(gltf.scene);
             resolve();
           });
         });
       };
 
+      let handleMeshRotation = () => {
+        // Even though my program should wait to animate until the async mesh load calls finish, I check here to be safe anyways.
+        if (window.SCENE.poly) {
+          // Code for rotation must be called in animate to create smooth transition when rotating.
+          if (window.SCENE.rotate_poly) {
+            let q = new THREE.Quaternion(0, Math.sin(Math.PI/2), 0, Math.cos(Math.PI/2));
+            window.SCENE.poly.quaternion.slerp( q, 0.01 );
+          } else {
+            let q = new THREE.Quaternion(0, 0, 0, 1);
+            window.SCENE.poly.quaternion.slerp( q, 0.01 );
+          }
+        }
+
+        if (window.SCENE.blender) {
+          // Code for rotation must be called in animate to create smooth transition when rotating.
+          if (window.SCENE.rotate_blender) {
+            let q = new THREE.Quaternion(0, Math.sin(Math.PI/2), 0, Math.cos(Math.PI/2));
+            window.SCENE.blender.quaternion.slerp( q, 0.01 );
+          } else {
+            let q = new THREE.Quaternion(0, 0, 0, 1);
+            window.SCENE.blender.quaternion.slerp( q, 0.01 );
+          }
+          // Update the normal helper after rotation.
+          window.SCENE.normals_helper.update();
+        }
+      }
+
       let animate = () => {
         requestAnimationFrame(animate);
+
+        handleMeshRotation();
+
+        stats.update();
 
         controls.update();
         if (window.SCENE.anaglyph) {
