@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGPU Rendering</title>
+    <style>
+      html,
+      body {
+        background-color: black;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Force canvas to be full size of viewport */
+      #canvas {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+
+    <script>
+        window.onload = async () => {
+            let canvas = document.getElementById("canvas"); // Pointer to canvas element
+
+            // Initialize Engine
+            let engine = new BABYLON.WebGPUEngine(canvas, { antialiasing: true });
+            await engine.initAsync();
+
+            // Initialize Scene
+            const scene = new BABYLON.Scene(engine);
+
+            // Load model
+            await BABYLON.SceneLoader.AppendAsync("", "UneditedAppa.glb", scene);
+        
+            scene.createDefaultCameraOrLight(true, true, true);
+            scene.activeCamera.attachControl(canvas, true);
+
+            engine.runRenderLoop(() => scene.render());
+            addEventListener("resize", () => engine.resize());
+        }
+        </script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+</body>
+</html>
