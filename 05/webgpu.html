@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebGPU Rendering</title>
@@ -24,28 +24,33 @@
     <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
 
     <script>
-        window.onload = async () => {
-            let canvas = document.getElementById("canvas"); // Pointer to canvas element
+      window.onload = async () => {
+        let canvas = document.getElementById("canvas"); // Pointer to canvas element
 
-            // Initialize Engine
-            let engine = new BABYLON.WebGPUEngine(canvas, { antialiasing: true });
-            await engine.initAsync();
+        // Initialize Engine
+        let engine = new BABYLON.WebGPUEngine(canvas, { antialiasing: true });
+        await engine.initAsync();
 
-            // Initialize Scene
-            const scene = new BABYLON.Scene(engine);
+        // Initialize Scene
+        const scene = new BABYLON.Scene(engine);
 
-            // Load model
-            await BABYLON.SceneLoader.AppendAsync("", "UneditedAppa.glb", scene);
-        
-            scene.createDefaultCameraOrLight(true, true, true);
-            scene.activeCamera.attachControl(canvas, true);
+        // Load model
+        await BABYLON.SceneLoader.AppendAsync("", "UneditedAppa.glb", scene);
+        // Reset rotation of the model in the scene.
+        scene.meshes.forEach((mesh) => {
+          mesh.rotation = BABYLON.Vector3.Zero();
+        });
 
-            engine.runRenderLoop(() => scene.render());
-            addEventListener("resize", () => engine.resize());
-        }
-        </script>
-</head>
-<body>
+        // Enable default camera and light
+        scene.createDefaultCameraOrLight(true, true, true);
+        scene.activeCamera.attachControl(canvas, true);
+
+        engine.runRenderLoop(() => scene.render());
+        addEventListener("resize", () => engine.resize());
+      };
+    </script>
+  </head>
+  <body>
     <canvas id="canvas"></canvas>
-</body>
+  </body>
 </html>
