@@ -37,11 +37,22 @@
         // Load model
         await BABYLON.SceneLoader.AppendAsync("", "UneditedAppa.glb", scene);
 
-        const pbr = new BABYLON.PBRMaterial("metal", scene);
+        // Example code used for setting up pbr: https://forum.babylonjs.com/t/how-to-use-pbr-material/9346/10
 
-        pbr.albedoColor = new BABYLON.Color3(1, 0, 0); // Red color
-        pbr.metallic = 0.8; // 0 = dielectric, 1 = full metal
-        pbr.roughness = 0.2; // 0 = smooth/shiny, 1 = rough/matte
+        // .env file used was found through babylon.js docs: https://github.com/BabylonJS/Documentation/blob/master/content/toolsAndResources/assetLibraries/availableTextures.md#hdr-as-env
+        const envTexture = BABYLON.CubeTexture.CreateFromPrefilteredData(
+          "https://playground.babylonjs.com/textures/parking.env",
+          scene
+        );
+
+        // Environment texture used for reflection on PBR.
+        scene.environmentTexture = envTexture;
+
+        const pbr = new BABYLON.PBRMaterial();
+        
+        // This creates a reflective metal surface like a mirror. The scene in the reflection is a parking lot which can be seen here: https://playground.babylonjs.com/#CGA05F#42
+        pbr.metallic = 1; 
+        pbr.roughness = 0; 
 
         // Reset rotation of the model in the scene.
         scene.meshes.forEach((mesh) => {
