@@ -87,7 +87,7 @@
         // Create scene
         scene = new THREE.Scene();
 
-        // Setup Camera
+        // Set up Camera
         let fov = 75;
         let ratio = window.innerWidth / window.innerHeight;
         let zNear = 0.1;
@@ -190,7 +190,7 @@
             model.translateY(y);
             model.translateZ(z);
 
-            // Remove rotation - Objects still appears rotated as that is how the model of the scan output.
+            // Remove rotation
             model.quaternion.w = 1;
             model.quaternion.x = 0;
             model.quaternion.y = 0;
@@ -237,7 +237,7 @@
             let q = new THREE.Quaternion(0, 0, 0, 1);
             window.SCENE.blender.quaternion.slerp( q, 0.01 );
           }
-          // Update the normal helper after rotation.
+          // Update the normals helper after rotation.
           window.SCENE.normals_helper.update();
         }
       }
