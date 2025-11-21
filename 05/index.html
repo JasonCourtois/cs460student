@@ -133,6 +133,11 @@
         sceneui.addBinding(directionalLight.position, "z", {min: -100, max: 100, label: "Light Z"});
 
         sceneui.addBinding(window.SCENE, "anaglyph");
+
+        sceneui.addBinding(directionalLight, "intensity", {min: 0, max: 10, label: "Intensity"})
+
+        // color: {type: "float"} is what restricts the range of rgb to 0,1 rather than 0,255.
+        sceneui.addBinding(ambientLight, "color", {color: {type: "float"}, label: "AmbientLight Color"});
         
         // Poly mesh controls
         let polyui = pane.addFolder({title: "PolyCam Mesh"});
